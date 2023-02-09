@@ -2,13 +2,14 @@ require 'rubygems'
 require 'sinatra'
 require 'sinatra/reloader'
 require 'pony'
+require 'sqlite3'
 
 get '/' do
 	erb "Hello! <a href=\"https://github.com/bootstrap-ruby/sinatra-bootstrap\">Original</a> pattern has been modified for <a href=\"http://rubyschool.us/\">Ruby School</a>"
 end
 
 get '/about' do
-  @error = 'Something wrong!'
+   @error = 'Something wrong!'
 	erb :about
 end
 
@@ -33,22 +34,11 @@ post '/visit' do
     return erb :visit
   end
 
-#  hh.each do |key, value|
-#    if params[key] == ''
-#      @error = hh[key]
-#      return erb :visit
-#    end
-#  end
+  db = SQLite3::Database.new 'barbershop.sqlite'
+  db.execute "INSERT INTO Visit (Username, Phone, Barber, Datetime, Color) VALUES ('#{@username.to_s}', '#{@phone}', '#{@barber}', '#{@datetime}', '#{@color}')"
+  db.close
 
-  #if @username == ''
-   # @error = 'Введите имя'
-    #return erb :visit
-  #else
-    file = File.open('./public/users.txt', 'a')
-    file.write("User: #{@username}, Phone: #{@phone}, Datetime: #{@datetime}, Barber: #{@barber}, Color: #{@color}\n")
-    file.close
-    erb "#{@username} Вы были успешно записаны!"
-  #end
+  erb "#{@username} Вы были успешно записаны!"
 end
 
 get '/contacts' do
@@ -58,10 +48,11 @@ end
 post '/contacts' do
   @email = params[:email]
   @comments = params[:comments]
-  f = File.open('./public/contacts.txt', 'a')
-  f.write("Email: #{@email} \nComment:\n#{@comments}\n#{'-' * 20}\n")
-  f.close
-  #erb :contacts
+
+  db = SQLite3::Database.new 'barbershop.sqlite'
+  db.execute "INSERT INTO Contact (Mailbox, Message) VALUES ('#{@email}', '#{@comments}')"
+  db.close
+
   Pony.mail({
     :from => 'pavadomino@gmail.com',
     :to => 'pavadomino@gmail.com',
@@ -74,7 +65,7 @@ post '/contacts' do
       :port                 => '587',
       :enable_starttls_auto => true,
       :user_name            => 'pavadomino@gmail.com',
-      :password             => 'smwirnyjmzkrnfyd',
+      :password             => '',
       :authentication       => :plain, # :plain, :login, :cram_md5, no auth by default
       :domain               => "gmail.com" # the HELO domain provided by the client to the server
     }
